@@ -1,28 +1,28 @@
 const dns = require('dns');
 const model = require('./model');
 
-const controller = (function() {
-  // private methods
-
-  // public API
-  return {
-    addURL: function(req, res) {
+const controller = {
+  generateURL: function(req, res) {
       const inputURL = req.body.url;
-      dns.lookup(inputURL, function(err, addresse) {
+
+      dns.lookup(inputURL, function(err, address) {
         if (err) {
           res.send({ error: 'Invalid URL' });
         } else {
-          // here it first need to check if url already in 
-          // db and if not it needs to get next available
-          // short url from db
-          res.send({ original_url: inputURL, short_url: 1 });
+          // res.send({ original_url: inputURL, short_url: 1 });
+          model.generateURLObject(inputURL, function(URLObject) {
+            res.send(URLObject);
+          });        
         }
       });
-    },
-    redirectToURL: function(req, res) {
-      
-    }
+  },
+  redirectToURL: function(req, res) {
+      const inputURL = req.params.shortURL;
+
+      model.getURLObject(inputURL, function(originalURL) {
+        res.redirect(originalURL);
+      });
   }
-})();
+}
 
 module.exports = controller;
