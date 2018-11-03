@@ -9,7 +9,6 @@ const controller = {
         if (err) {
           res.send({ error: 'Invalid URL' });
         } else {
-          // res.send({ original_url: inputURL, short_url: 1 });
           model.generateURLObject(inputURL, function(URLObject) {
             res.send(URLObject);
           });        

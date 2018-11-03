@@ -41,77 +41,62 @@ const init = function() {
   });
 }
 
-// NextAvailableShortURLSchema.methods = {
-//   setNextAvailableShortURL: function() {
-//     this.findOneAndUpdate({}, { $inc: { nextShortURL: 1 } }, { options: true }, function(err, currentId) {
-//       if (err) return { 'error': 'Server error' };
-//       return currentId;
-//     });
-//   },
-//   getNextAvailableShortURL: function() {
-//     this.findOne({}, function(err, currentId) {
-//       if (err) return { 'error': 'Server error' };
-//       return currentId;
-//     });
-//   }
-// };
-
 const NextAvailableShortURL = mongoose.model('NextAvailableShortURL', NextAvailableShortURLSchema);
 
-const model = {
-  generateURLObject: function(originalURL, cb) {
-    
-    // check if url already in database
+const model = (function() {
+  const INTERNAL_ERR_MSG = 'Internal server error';
 
-    // figure out why select is not working 
+  const _errResponse = function(err, message, cb) {
+    console.error(err);
+    return cb({ error: message });
+  };
+
+  generateURLObject = function(originalURL, cb) {
+
+    // check if url already in database
     URLGenerator.findOne({ original_url: originalURL }, function(err, record) {
-      if (err) {
-        console.error(err);
-        return cb({ error: 'Internal server error' });
-      } 
+      if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
 
       if (record) {
         const publicRec = Object.assign({}, { original_url: record.original_url, short_url: record.short_url });
         return cb(publicRec);
       }
 
-      // generate new url object
+      // generate new url object if it doesn't exist already
       // -- take next available short url
       NextAvailableShortURL.findOneAndUpdate({}, { $inc: { nextShortURL: 1 } }, function(err, recShort) {
-        if (err) {
-          console.error(err);
-          return cb({ error: 'Internal server error' });
-        }
-        
+        if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
+
         URLGenerator.create({ original_url: originalURL, short_url: recShort.nextShortURL }, function(err, recURLs) {
-          if (err) {
-            console.error(err);
-            return cb({ error: 'Internal server error' });
-          }
+          if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
+
           const publicURLObject = Object.assign({}, { original_url: recURLs.original_url, short_url: recURLs.short_url });
           cb(publicURLObject);
         });
       });
     });
-  },
-  getURLObject: function(shortURL, cb) {
+  };
+
+  const getURLObject = function(shortURL, cb) {
     URLGenerator.findOne({ short_url: shortURL }, function(err, record) {
-      if (err) {
-        console.error(err);
-        return cb({ error: 'Internal server error' });
-      }
+      if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
 
       if (record) {
         console.log(record);
         const temp_url = `http://${record.original_url}`;
         return cb(temp_url);
       }
-      
+
       console.log(record);
       return cb({ error: 'No such short URL' });
     });
+  };
+
+  return {
+    generateURLObject,
+    getURLObject
   }
-};
+})();
 
 // initialize if neccessary
 init();
