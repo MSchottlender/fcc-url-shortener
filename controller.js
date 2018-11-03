@@ -20,6 +20,7 @@ const controller = {
       const inputURL = req.params.shortURL;
 
       model.getURLObject(inputURL, function(originalURL) {
+        if (typeof originalURL === 'object') return res.send(originalURL);
         res.redirect(originalURL);
       });
   }

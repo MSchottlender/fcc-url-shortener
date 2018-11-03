@@ -59,8 +59,6 @@ const init = function() {
 const NextAvailableShortURL = mongoose.model('NextAvailableShortURL', NextAvailableShortURLSchema);
 
 const model = {
-  setNextAvailableShortURL: function() {},
-  getNextAvailableShortURL: function() {},
   generateURLObject: function(originalURL, cb) {
     
     // check if url already in database
@@ -68,11 +66,10 @@ const model = {
     // figure out why select is not working 
     URLGenerator.findOne({ original_url: originalURL }, function(err, record) {
       if (err) {
-        console.log(err);
+        console.error(err);
         return cb({ error: 'Internal server error' });
       } 
 
-      // remove this after you have figured out select issue    
       if (record) {
         const publicRec = Object.assign({}, { original_url: record.original_url, short_url: record.short_url });
         return cb(publicRec);
@@ -97,7 +94,23 @@ const model = {
       });
     });
   },
-  getURLObject: function(shortURL, cb) {}
+  getURLObject: function(shortURL, cb) {
+    URLGenerator.findOne({ short_url: shortURL }, function(err, record) {
+      if (err) {
+        console.error(err);
+        return cb({ error: 'Internal server error' });
+      }
+
+      if (record) {
+        console.log(record);
+        const temp_url = `http://${record.original_url}`;
+        return cb(temp_url);
+      }
+      
+      console.log(record);
+      return cb({ error: 'No such short URL' });
+    });
+  }
 };
 
 // initialize if neccessary
