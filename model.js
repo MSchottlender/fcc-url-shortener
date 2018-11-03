@@ -51,6 +51,14 @@ const model = (function() {
     return cb({ error: message });
   };
 
+  const _getNextAvailableShortURL = function(cb) {
+    NextAvailableShortURL.findOneAndUpdate({}, { $inc: { nextShortURL: 1 } }, cb);
+  };
+
+  const _createNewURLObject = function(originalURL, shortURL, cb) {
+    URLGenerator.create({ original_url: originalURL, short_url: shortURL }, cb);
+  };
+
   generateURLObject = function(originalURL, cb) {
 
     // check if url already in database
@@ -64,12 +72,12 @@ const model = (function() {
 
       // generate new url object if it doesn't exist already
       // -- take next available short url
-      NextAvailableShortURL.findOneAndUpdate({}, { $inc: { nextShortURL: 1 } }, function(err, recShort) {
+      _getNextAvailableShortURL(function (err, recShort) {
         if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
 
-        URLGenerator.create({ original_url: originalURL, short_url: recShort.nextShortURL }, function(err, recURLs) {
+        _createNewURLObject(originalURL, recShort.nextShortURL, function (err, recURLs) {
           if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
-
+          
           const publicURLObject = Object.assign({}, { original_url: recURLs.original_url, short_url: recURLs.short_url });
           cb(publicURLObject);
         });
@@ -82,7 +90,6 @@ const model = (function() {
       if (err) return _errResponse(err, INTERNAL_ERR_MSG, cb);
 
       if (record) {
-        console.log(record);
         const temp_url = `http://${record.original_url}`;
         return cb(temp_url);
       }
