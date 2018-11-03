@@ -5,11 +5,18 @@ const controller = {
   generateURL: function(req, res) {
       const inputURL = req.body.url;
 
-      dns.lookup(inputURL, function(err, address) {
+      const _removeProtocolFromURL = function(url) {
+        if (url[4] == 's') return url.substr(8);
+        return url.substr(7);
+      }
+
+      const host = _removeProtocolFromURL(inputURL);
+
+      dns.lookup(host, function(err, address) { 
         if (err) {
           res.send({ error: 'Invalid URL' });
         } else {
-          model.generateURLObject(inputURL, function(URLObject) {
+          model.generateURLObject(host, function(URLObject) {
             res.send(URLObject);
           });        
         }

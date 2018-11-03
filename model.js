@@ -59,7 +59,7 @@ const model = (function() {
     URLGenerator.create({ original_url: originalURL, short_url: shortURL }, cb);
   };
 
-  generateURLObject = function(originalURL, cb) {
+  const generateURLObject = function(originalURL, cb) {
 
     // check if url already in database
     URLGenerator.findOne({ original_url: originalURL }, function(err, record) {
