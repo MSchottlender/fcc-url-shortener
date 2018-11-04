@@ -14,7 +14,9 @@ const app = express();
 
 // basic configuration 
 const PORT = process.env.PORT || 3000;
-const MONGO_URL = `mongodb://localhost:27017/url-shortener`;
+const MONGO_USER = process.env.MONGO_USER;
+const MONGO_PASS = process.env.MONGO_PASS;
+const MONGO_URL = `mongodb://${MONGO_USER}:${MONGO_PASS}@ds151523.mlab.com:51523/url-shortener-micro`;
 
 // set up database connection
 mongoose.Promise = global.Promise;
