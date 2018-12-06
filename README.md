@@ -1,6 +1,6 @@
 # API Project: URL Shortener Microservice for freeCodeCamp
 
-### [live app link](https://glitch.com/~outrageous-clipper)
+### [live app link](https://outrageous-clipper.glitch.me/)
 
 ### User Stories
 
