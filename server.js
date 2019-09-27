@@ -1,52 +1,76 @@
 'use strict';
 
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
+var express = require('express');
+var mongo = require('mongodb');
+var mongoose = require('mongoose');
+var bodyParser = require('body-parser');
 
-const cors = require('cors');
-const jsonParser = bodyParser.json();
-const urlencodedParser = bodyParser.urlencoded({ extended: false });
+mongoose.connect('mongodb+srv://mschott:bwmVdGR5EYgkglox@cluster0-lzvdg.mongodb.net/test?retryWrites=true&w=majority');
 
-const router = require('./router');
+var cors = require('cors');
 
-const app = express();
+var app = express();
 
-// basic configuration 
-const PORT = process.env.PORT || 3000;
-const MONGO_USER = process.env.MONGO_USER;
-const MONGO_PASS = process.env.MONGO_PASS;
-const MONGO_URL = `mongodb://${MONGO_USER}:${MONGO_PASS}@ds151523.mlab.com:51523/url-shortener-micro`;
+// Basic Configuration 
+var port = process.env.PORT || 3000;
 
-// set up database connection
-mongoose.Promise = global.Promise;
-const mongoOptions = { useMongoClient: true };
-mongoose.connect(MONGO_URL, mongoOptions)
-  .then(function() {
-    console.log('connected to database url-shortener');
-  })
-  .catch(function(error) {
-    console.error(error.message);
-    process.exit(1);
-  });
+/** this project needs a db !! **/ 
+// mongoose.connect(process.env.MONGOLAB_URI);
 
-// implement middlewares
-app.use(cors());
-app.use(jsonParser);
+var urlencodedParser = bodyParser.urlencoded({extended: false});
 app.use(urlencodedParser);
+
+var numShort = 0;
+
+app.use(cors());
+
+/** this project needs to parse POST bodies **/
+// you should mount the body-parser here
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
-// implement router
-app.use('/api/shorturl/', router);
 app.get('/', function(req, res){
   res.sendFile(process.cwd() + '/views/index.html');
 });
-app.get('/*', function(req, res) {
-  res.redirect('/');
+
+  
+// your first API endpoint... 
+app.get("/api/hello", function (req, res) {
+  res.json({greeting: 'hello API'});
 });
 
-// mount server
-app.listen(PORT, function () {
-  console.log(`Node.js listening on port ${PORT}...`);
+
+app.listen(port, function () {
+  console.log('Node.js listening ...');
+});
+
+var Schema = mongoose.Schema;
+var urlSchema = new Schema({
+  original_url : String ,
+  short_url :  Number,
+});
+
+var urlAlternative = mongoose.model('urlAlternative',urlSchema);
+
+app.use("/api/shorturl/new",(req,res)=>{
+  if(/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/ig.test(req.body.url)){
+  numShort ++;
+  const pack = new urlAlternative({original_url: req.body.url,
+            short_url: numShort});
+  res.send({original_url: req.body.url,
+            short_url: numShort});
+  pack.save((err,data)=>{
+    if(err) console.log("Failure at saving")
+  })
+  } else {
+  res.send({error: "invalid URL"});
+  }
+});
+
+app.use("/api/shorturl/:number",(req,res)=>{
+  urlAlternative.findOne({short_url: req.params.number},(err,data)  => {
+    if(err) res.send({error: "short URL not recognized"})
+    res.redirect(data.original_url)
+  });
+  
 });
